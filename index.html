@@ -5,47 +5,50 @@
     <title>МаксЛэнд - Плеер</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        body { background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         #video-player { width: 100%; max-width: 800px; height: 450px; background: #000; border: 2px solid #ff8c00; }
-        .controls { margin-top: 20px; }
+        .btn { margin-top: 20px; padding: 15px 30px; background: #ff8c00; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        #log { margin-top: 15px; color: #ff8c00; }
     </style>
 </head>
 <body>
 
     <h1>МАКСЛЭНД LIVE</h1>
     <video id="video-player" controls autoplay></video>
-    <div class="controls" id="status">Загрузка данных...</div>
+    <button class="btn" onclick="startStream()">ЗАПУСТИТЬ КАНАЛ</button>
+    <div id="log">Нажмите кнопку для подключения...</div>
 
 <script>
     const video = document.getElementById('video-player');
-    const status = document.getElementById('status');
-    const m3uUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://raw.githubusercontent.com/PulseTV-YT/ip-tv/refs/heads/main/123.m3u");
+    const log = document.getElementById('log');
 
-    async function init() {
+    // Используем JSDelivr для чтения raw файла - это работает всегда!
+    const m3uUrl = "https://cdn.jsdelivr.net/gh/PulseTV-YT/ip-tv@main/123.m3u";
+
+    async function startStream() {
+        log.innerText = "Подключение...";
         try {
             const response = await fetch(m3uUrl);
-            let data = await response.text();
+            const data = await response.text();
             
-            // Убираем скрытые символы и приводим к нижнему регистру для поиска
             const lines = data.split('\n');
-            let foundUrl = "";
-
+            let streamUrl = "";
+            
             for (let i = 0; i < lines.length; i++) {
-                // Ищем только по слову "седьмой", это надежнее
                 if (lines[i].toLowerCase().includes("седьмой")) {
-                    foundUrl = lines[i + 1].trim();
-                    status.innerText = "Канал найден: " + lines[i].replace('#EXTINF:-1,', '');
+                    streamUrl = lines[i + 1].trim();
                     break;
                 }
             }
 
-            if (foundUrl) {
-                playVideo(foundUrl);
+            if (streamUrl) {
+                log.innerText = "Канал найден, загрузка...";
+                playVideo(streamUrl);
             } else {
-                status.innerText = "Ошибка: канал 'Седьмой' не найден. Проверь файл на GitHub.";
+                log.innerText = "Ошибка: канал 'Седьмой' не найден в файле.";
             }
         } catch (e) {
-            status.innerText = "Ошибка загрузки: " + e.message;
+            log.innerText = "Ошибка сети: " + e.message;
         }
     }
 
@@ -60,8 +63,6 @@
             video.play();
         }
     }
-
-    init();
 </script>
 </body>
 </html>
