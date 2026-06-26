@@ -2,65 +2,39 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>МаксЛэнд - Плеер</title>
+    <title>МаксЛэнд - Отладка</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body { background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        #video-player { width: 100%; max-width: 800px; height: 450px; background: #000; border: 2px solid #ff8c00; }
-        .btn { margin-top: 10px; padding: 15px 30px; background: #ff8c00; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        #log { margin-top: 10px; color: #ff8c00; font-size: 0.9em; }
+        body { background: #111; color: white; font-family: sans-serif; padding: 20px; }
+        #debug { color: #aaa; font-family: monospace; white-space: pre-wrap; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <h1>МАКСЛЭНД LIVE</h1>
-    <video id="video-player" controls autoplay></video>
-    <button class="btn" onclick="startStream()">ОБНОВИТЬ И ЗАПУСТИТЬ</button>
-    <div id="log">Нажмите кнопку для чтения плейлиста</div>
+    <h1>МаксЛэнд Live</h1>
+    <button onclick="debugPlaylist()">ПРОВЕРИТЬ ПЛЕЙЛИСТ</button>
+    <div id="debug"></div>
 
 <script>
-    const video = document.getElementById('video-player');
-    const log = document.getElementById('log');
-    // Используем прокси напрямую в fetch
-    const m3uUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://raw.githubusercontent.com/PulseTV-YT/ip-tv/refs/heads/main/123.m3u");
-
-    async function startStream() {
+    async function debugPlaylist() {
+        const m3uUrl = "https://raw.githubusercontent.com/PulseTV-YT/ip-tv/refs/heads/main/123.m3u";
+        const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(m3uUrl);
+        const debugDiv = document.getElementById('debug');
+        
         try {
-            log.innerText = "Чтение файла...";
-            const response = await fetch(m3uUrl);
+            debugDiv.innerText = "Скачиваю...";
+            const response = await fetch(proxy);
             const data = await response.text();
             
-            // Ищем строку с «Седьмой канал»
-            const lines = data.split('\n');
-            let streamUrl = "";
+            debugDiv.innerText = "ФАЙЛ ПОЛУЧЕН:\n" + data; // Вывод всего, что пришло
             
-            for (let i = 0; i < lines.length; i++) {
-                if (lines[i].includes("Седьмой канал")) {
-                    streamUrl = lines[i + 1].trim();
-                    break;
-                }
-            }
-
-            if (streamUrl) {
-                log.innerText = "Канал найден! Запуск...";
-                playVideo(streamUrl);
+            if (data.includes("Седьмой канал")) {
+                alert("Фраза найдена!");
             } else {
-                log.innerText = "Ошибка: канал не найден в плейлисте.";
+                alert("Фраза 'Седьмой канал' НЕ найдена в тексте.");
             }
         } catch (e) {
-            log.innerText = "Ошибка соединения: " + e.message;
-        }
-    }
-
-    function playVideo(url) {
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else {
-            video.src = url;
-            video.play();
+            debugDiv.innerText = "Ошибка: " + e.message;
         }
     }
 </script>
